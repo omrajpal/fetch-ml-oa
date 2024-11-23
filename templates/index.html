@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Receipt Prediction Timeline</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        h1 {
+            text-align: center;
+        }
+    </style>
+<body>
+    <header>
+        <h1>Receipt Prediction Timeline</h1>
+    </header>
+    <main>
+        <canvas id="predictionChart" width="400" height="200"></canvas>
+    </main>
+
+    <script>
+
+        //Helper function to add commas to the # receipts in the graph
+        function numberWithCommas(x) {
+            return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
+        //Function to render chart
+        function renderChart(data) {
+            const ctx = document.getElementById('predictionChart').getContext('2d');
+            const filteredData = data.filter(item => item[0] <= 2022);
+
+            //Data processing to filter data in graph
+            const months = filteredData.map(item => {
+                const year = String(item[0]).substring(2); 
+                const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                const monthIndex = item[1] - 1; 
+                const monthName = monthNames[monthIndex];
+                return `${monthName} '${year}`;
+            }); 
+
+            //Remove values for 2022 in actualValues and remove values for 2021 in predictedValues
+            const actualValues = filteredData.map(item => (item[0] <= 2021 ? item[2] : null)); 
+            const predictedValues = filteredData.map(item => (item[0] > 2021 ? item[3] : null)); 
+
+            //Render Chart
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [
+                        {
+                            label: 'Actual 2021',
+                            data: actualValues,
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 2,
+                            fill: false
+                        },
+                        {
+                            label: 'Predicted 2022',
+                            data: predictedValues,
+                            borderColor: 'rgba(192, 75, 75, 1)',
+                            borderWidth: 2,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Month',
+                                font: {
+                                    weight: 'bold', 
+                                    size: 16
+                                }
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Receipts',
+                                font: {
+                                    weight: 'bold',
+                                    size: 16 
+                                }
+                            },
+                            ticks: {
+                                callback: function (value) {
+                                    return numberWithCommas(value); 
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const label = context.dataset.label || '';
+                                    const value = context.parsed.y;
+                                    return label + ': ' + numberWithCommas(value) + ' receipts'; 
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Call the renderChart function with data from FrontEnd.py
+        renderChart({{ data | tojson | safe }});
+    </script>
+</body>
+</html>
