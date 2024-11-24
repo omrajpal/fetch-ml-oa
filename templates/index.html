@@ -4,8 +4,34 @@
     <title>Receipt Prediction Timeline</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        h1 {
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f4f4f4;
+            color: #333;
+        }
+        header {
+            background: #007BFF;
+            color: white;
+            padding: 1em 0;
             text-align: center;
+        }
+        main {
+            padding: 2em;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        canvas {
+            max-width: 80%;
+        }
+        footer {
+            text-align: center;
+            margin-top: 2em;
+            font-size: 0.9em;
+            color: #666;
         }
     </style>
 <body>
@@ -13,22 +39,24 @@
         <h1>Receipt Prediction Timeline</h1>
     </header>
     <main>
-        <canvas id="predictionChart" width="400" height="200"></canvas>
+        <h2>Explore Predicted and Actual Data</h2>
+        <canvas id="predictionChart" width="800" height="400"></canvas>
     </main>
+    <footer>
+        Built with Chart.js and Flask
+    </footer>
+
 
     <script>
 
-        //Helper function to add commas to the # receipts in the graph
         function numberWithCommas(x) {
             return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
         }
 
-        //Function to render chart
         function renderChart(data) {
             const ctx = document.getElementById('predictionChart').getContext('2d');
             const filteredData = data.filter(item => item[0] <= 2022);
 
-            //Data processing to filter data in graph
             const months = filteredData.map(item => {
                 const year = String(item[0]).substring(2); 
                 const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -37,58 +65,48 @@
                 return `${monthName} '${year}`;
             }); 
 
-            //Remove values for 2022 in actualValues and remove values for 2021 in predictedValues
+            
             const actualValues = filteredData.map(item => (item[0] <= 2021 ? item[2] : null)); 
             const predictedValues = filteredData.map(item => (item[0] > 2021 ? item[3] : null)); 
 
-            //Render Chart
             new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: months,
                     datasets: [
                         {
-                            label: 'Actual 2021',
+                            label: 'Actual Data',
                             data: actualValues,
-                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderColor: '#4CAF50',
                             borderWidth: 2,
-                            fill: false
+                            fill: false,
                         },
                         {
-                            label: 'Predicted 2022',
+                            label: 'Predicted Data',
                             data: predictedValues,
-                            borderColor: 'rgba(192, 75, 75, 1)',
+                            borderColor: '#FF5722',
                             borderWidth: 2,
-                            fill: false
+                            fill: false,
                         }
                     ]
                 },
                 options: {
+                    responsive: true,
                     scales: {
                         x: {
-                            beginAtZero: true,
                             title: {
                                 display: true,
-                                text: 'Month',
-                                font: {
-                                    weight: 'bold', 
-                                    size: 16
-                                }
+                                text: 'Months',
                             }
                         },
                         y: {
-                            beginAtZero: true,
                             title: {
                                 display: true,
                                 text: 'Receipts',
-                                font: {
-                                    weight: 'bold',
-                                    size: 16 
-                                }
                             },
                             ticks: {
                                 callback: function (value) {
-                                    return numberWithCommas(value); 
+                                    return numberWithCommas(value);
                                 }
                             }
                         }
@@ -97,9 +115,7 @@
                         tooltip: {
                             callbacks: {
                                 label: function (context) {
-                                    const label = context.dataset.label || '';
-                                    const value = context.parsed.y;
-                                    return label + ': ' + numberWithCommas(value) + ' receipts'; 
+                                    return `${context.dataset.label}: ${numberWithCommas(context.raw)} receipts`;
                                 }
                             }
                         }
@@ -108,7 +124,6 @@
             });
         }
 
-        // Call the renderChart function with data from FrontEnd.py
         renderChart({{ data | tojson | safe }});
     </script>
 </body>
